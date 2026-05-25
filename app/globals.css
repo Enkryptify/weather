@@ -1,26 +1,240 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Design tokens ──────────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: #211f1a;
+  --color-ink-soft: #847c6f;
+  --color-sheet: #faf8f2;
+  --color-line: rgba(33, 31, 26, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Animatable sky variables — registered so the gradient cross-fades when the
+   weather or time of day changes. */
+@property --g1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #bfe1f4;
+}
+@property --g2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #eef4ef;
+}
+@property --g3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f6ecd7;
+}
+@property --on {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #211f1a;
+}
+@property --on-soft {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(33, 31, 26, 0.6);
+}
+@property --orb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 240, 200, 0.6);
+}
+
+:root {
+  --accent: #c2913c;
+}
+
+html {
+  color-scheme: light;
+  transition:
+    --g1 1.4s ease,
+    --g2 1.4s ease,
+    --g3 1.4s ease,
+    --on 1.4s ease,
+    --on-soft 1.4s ease,
+    --orb 1.4s ease;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  color: var(--on);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.005em;
+  background:
+    radial-gradient(42% 30% at 80% 12%, var(--orb), transparent 64%),
+    linear-gradient(166deg, var(--g1) 0%, var(--g2) 50%, var(--g3) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A large, soft, slowly drifting glow for atmosphere. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -25%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    34% 34% at 50% 50%,
+    var(--orb),
+    transparent 70%
+  );
+  opacity: 0.7;
+  filter: blur(30px);
+  animation: drift-orb 32s ease-in-out infinite;
+}
+
+/* Fine grain + a whisper of edge vignette for depth. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  background-image:
+    radial-gradient(120% 120% at 50% 30%, transparent 64%, rgba(33, 31, 26, 0.08)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* ── Display face ───────────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* ── Sky-adaptive text ──────────────────────────────────────────────────── */
+.text-on {
+  color: var(--on);
+}
+.text-on-soft {
+  color: var(--on-soft);
+}
+
+/* ── Translucent field that adapts to the sky ──────────────────────────── */
+.field-sky {
+  background: color-mix(in oklab, var(--on) 7%, transparent);
+  border: 1px solid color-mix(in oklab, var(--on) 14%, transparent);
+  transition: border-color 0.4s ease, background 0.4s ease;
+}
+.field-sky:focus-within {
+  border-color: color-mix(in oklab, var(--on) 30%, transparent);
+}
+
+/* ── The rising sheet that holds the forecast ───────────────────────────── */
+.sheet {
+  background: var(--color-sheet);
+  color: var(--color-ink);
+  border-radius: 30px 30px 0 0;
+  box-shadow:
+    0 -0.5px 0 rgba(255, 255, 255, 0.7) inset,
+    0 -26px 60px -40px rgba(20, 18, 13, 0.4);
+}
+
+.rule {
+  height: 1px;
+  background: var(--color-line);
+}
+
+/* ── Solid pill button ──────────────────────────────────────────────────── */
+.btn {
+  background: var(--color-ink);
+  color: var(--color-sheet);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.btn:hover {
+  opacity: 0.88;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes drift-orb {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6%, 4%) scale(1.08);
+  }
+}
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes fall {
+  0% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  animation: rise 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+.spin-slow {
+  animation: spin-slow 60s linear infinite;
+  transform-origin: center;
+}
+.bob {
+  animation: bob 6s ease-in-out infinite;
+}
+.drop {
+  animation: fall 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .spin-slow,
+  .bob,
+  .drop,
+  body::before {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+  }
+}
+
+/* ── Hide scrollbar on the hourly rail ──────────────────────────────────── */
+.no-bar {
+  scrollbar-width: none;
+}
+.no-bar::-webkit-scrollbar {
+  display: none;
 }
